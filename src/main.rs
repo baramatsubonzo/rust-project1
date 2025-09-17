@@ -1,19 +1,20 @@
 use std::time::Instant;
-use rand::Rng;
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 fn main() {
     let n: usize = 1500;
 
-    let mut rng = rand::thread_rng();
+    let mut a: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    let mut b: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    let mut c: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
 
-    let mut a: Vec<Vec<f64>> = vec![vec![0.0; n]; n];
-    let mut b: Vec<Vec<f64>> = vec![vec![0.0; n]; n];
-    let mut c: Vec<Vec<f64>> = vec![vec![0.0; n]; n];
+    // Equivalent to `srand(42)` in C
+    let mut rng = StdRng::seed_from_u64(42);
 
     for i in 0..n {
         for j in 0..n {
-            a[i][j] = rng.random::<f64>();
-            b[i][j] = rng.random::<f64>();
+            a[i][j] = rng.random::<u32>() as f64;
+            b[i][j] = rng.random::<u32>() as f64;
         }
     }
 
@@ -29,6 +30,6 @@ fn main() {
         }
     }
 
-    let duration = start_time.elapsed();
+    let duration = start_time.elapsed().as_secs_f64();
     println!("{:.6?} seconds", duration);
 }
