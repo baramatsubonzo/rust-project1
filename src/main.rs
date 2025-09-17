@@ -30,5 +30,5 @@ fn main() {
     }
 
     let duration = start_time.elapsed();
-    println!("{:.2?} seconds", duration);
+    println!("{:.6?} seconds", duration);
 }
