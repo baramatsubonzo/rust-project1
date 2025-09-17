@@ -32,4 +32,11 @@ fn main() {
 
     let duration = start_time.elapsed().as_secs_f64();
     println!("{:.6?} seconds", duration);
+
+    // Use part of the result matrix (checksum of the first row)
+    // to prevent the compiler from optimizing away the entire
+    // matrix multiplication as dead code. This ensures that
+    // the benchmark measures the actual computation cost.
+    let checksum: f64 = c[0].iter().take(8).sum();
+    eprintln!("checksum(first row, 8) = {:.6e}", checksum);
 }
