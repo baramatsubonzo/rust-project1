@@ -1,34 +1,42 @@
 use std::time::Instant;
-use rand::Rng;
-
-const N: usize = 1500;
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 fn main() {
-    let mut rng = rand::thread_rng();
+    let n: usize = 1500;
 
-    let mut a: Vec<Vec<f64>> = vec![vec![0.0; N]; N];
-    let mut b: Vec<Vec<f64>> = vec![vec![0.0; N]; N];
-    let mut c: Vec<Vec<f64>> = vec![vec![0.0; N]; N];
+    let mut a: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    let mut b: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    let mut c: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
 
-    for i in 0..N {
-        for j in 0..N {
-            a[i][j] = rng.random::<f64>();
-            b[i][j] = rng.random::<f64>();
+    // Equivalent to `srand(42)` in C
+    let mut rng = StdRng::seed_from_u64(42);
+
+    for i in 0..n {
+        for j in 0..n {
+            a[i][j] = rng.random::<u32>() as f64;
+            b[i][j] = rng.random::<u32>() as f64;
         }
     }
 
     let start_time = Instant::now();
 
-    for i in 0..N {
-        for j in 0..N {
+    for i in 0..n {
+        for j in 0..n {
             let mut total = 0.0;
-            for k in 0..N {
+            for k in 0..n {
                 total += a[i][k] * b[k][j];
             }
             c[i][j] = total;
         }
     }
 
-    let duration = start_time.elapsed();
-    println!("{:.2?} seconds", duration);
+    let duration = start_time.elapsed().as_secs_f64();
+    println!("{:.6?} seconds", duration);
+
+    // Use part of the result matrix (checksum of the first row)
+    // to prevent the compiler from optimizing away the entire
+    // matrix multiplication as dead code. This ensures that
+    // the benchmark measures the actual computation cost.
+    let checksum: f64 = c[0].iter().take(8).sum();
+    eprintln!("checksum(first row, 8) = {:.6e}", checksum);
 }
