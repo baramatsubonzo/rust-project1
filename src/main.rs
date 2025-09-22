@@ -1,5 +1,6 @@
 use std::time::Instant;
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use std::thread;
 
 #[inline]
 fn idx(i: usize, j: usize, n: usize) -> usize { i * n + j } // row-major
@@ -34,17 +35,34 @@ fn main() {
     // Start timing the matrix multiplication
     let start_time = Instant::now();
 
-    for i in 0..n {
-        let ai = &a[idx(i, 0, n) .. idx(i, 0, n) + n]; // row i of A
-        for j in 0..n {
-            let btj = &bt[idx(j, 0, n) .. idx(j, 0, n) + n]; // row j of BT (col j of B)
-            let mut sum = 0.0;
-            for k in 0..n {
-                sum += ai[k] * btj[k];  // A[i, k] * B[k, j]
+    let num_threads = thread::available_parallelism().map(|p| p.get()).unwrap_or(4);
+    let chunk_size = (n + num_threads - 1) / num_threads; // ceiling division
+
+    thread:: scope(|s| {
+        for (thread_id, c_chunk) in c.chunks_mut(chunk_size * n).enumerate() {
+            let a_ref = &a;
+            let bt_ref = &bt;
+
+            s.spawn({move || {
+                let start_row = thread_id * chunk_size;
+                for i_local in 0..(c_chunk.len() / n) {
+                    let i_global = start_row + i_local;
+
+                    let ai = &a_ref[idx(i_global, 0, n) .. idx(i_global + 1, 0, n)];
+                    for j in 0..n {
+                        let btj = &bt_ref[idx(j, 0, n) .. idx(j+1, 0, n)];
+                        let mut sum = 0.0;
+                        for k in 0..n {
+                            sum += ai[k] * btj[k];
+                        }
+                        c_chunk[idx(i_local, j, n)] = sum;
+                    }
+                }
             }
-            c[idx(i, j, n)] = sum; // C[i, j]
+
+            });
         }
-    }
+    });
 
     let duration = start_time.elapsed().as_secs_f64();
     println!("multiply only: {:.6?} seconds", duration);
