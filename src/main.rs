@@ -26,7 +26,7 @@ fn main() {
         // Generate row i of B and store it into BT transposed (BT[j, i] = B[i, j])
         for j in 0..n {
             let bij = rng.random::<u32>() as f64;
-            bt[idx(j, i, n)] = bij; // B[i, j]
+            bt[idx(j, i, n)] = bij; // store B[i, j] into BT[j, i]
         }
     }
     let t_transpose = t0.elapsed().as_secs_f64();
