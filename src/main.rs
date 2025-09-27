@@ -6,7 +6,7 @@ use rayon::prelude::*;
 fn idx(i: usize, j: usize, n: usize) -> usize { i * n + j } // row-major
 
 fn main() {
-    let n: usize = 1500;
+    let n: usize = 2000;
 
     // Flattened matrix in contiguous memory
     let mut a = vec![0.0_f64; n * n];
@@ -51,13 +51,11 @@ fn main() {
         });
 
     let duration = start_time.elapsed().as_secs_f64();
-    println!("multiply only: {:.6?} seconds", duration);
-    println!("transpose(B): {:.6?} seconds", t_transpose);
+    println!("multiply only: {:.6} seconds", duration);
+    println!("transpose(B): {:.6} seconds", t_transpose);
 
-    // Use part of the result matrix (checksum of the first row)
-    // to prevent the compiler from optimizing away the entire
-    // matrix multiplication as dead code. This ensures that
-    // the benchmark measures the actual computation cost.
+     // Suppress compiler optimization by using the result.
     let checksum: f64 = c[0..8].iter().sum();
+
     eprintln!("checksum(first row, 8) = {:.6e}", checksum);
 }
