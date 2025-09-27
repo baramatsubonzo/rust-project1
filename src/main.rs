@@ -18,20 +18,33 @@ fn main() {
         }
     }
 
+    // transpose matrix b for better cache performance
+    let mut bt: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    let t0 = Instant::now();
+    for k in 0..n {
+        for j in 0..n {
+            bt[j][k] = b[k][j];
+        }
+    }
+    let t_transpose = t0.elapsed().as_secs_f64();
+
+    // Start timing the matrix multiplication
     let start_time = Instant::now();
 
     for i in 0..n {
         for j in 0..n {
             let mut total = 0.0;
             for k in 0..n {
-                total += a[i][k] * b[k][j];
+                //total += a[i][k] * b[k][j];
+                total += a[i][k] * bt[j][k];
             }
             c[i][j] = total;
         }
     }
 
     let duration = start_time.elapsed().as_secs_f64();
-    println!("{:.6} seconds", duration);
+    println!("multiply only: {:.6} seconds", duration);
+    println!("transpose(B): {:.6} seconds", t_transpose);
 
     // Suppress compiler optimization by using the result.
     let checksum: f64 = c[0].iter().take(8).sum();
