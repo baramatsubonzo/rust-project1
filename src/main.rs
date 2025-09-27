@@ -1,29 +1,32 @@
 use std::time::Instant;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
+#[inline]
+fn idx(i: usize, j: usize, n: usize) -> usize { i * n + j } // row-major
+
 fn main() {
     let n: usize = 2000;
 
-    let mut a: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
-    let mut b: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
-    let mut c: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    // Flattened matrix in contiguous memory
+    let mut a = vec![0.0_f64; n * n];
+    let mut bt = vec![0.0_f64; n * n];
+    let mut c = vec![0.0_f64; n * n];
 
     // Equivalent to `srand(42)` in C
     let mut rng = StdRng::seed_from_u64(42);
 
-    for i in 0..n {
-        for j in 0..n {
-            a[i][j] = rng.random::<u32>() as f64;
-            b[i][j] = rng.random::<u32>() as f64;
-        }
-    }
 
-    // transpose matrix b for better cache performance
-    let mut bt: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
+    // Initialize metrices and transpose matrix b for better cache performance
     let t0 = Instant::now();
-    for k in 0..n {
+    for i in 0..n {
+        // row i of A
         for j in 0..n {
-            bt[j][k] = b[k][j];
+            a[idx(i, j, n)] = rng.random::<u32>() as f64;
+        }
+        // Generate row i of B and store it into BT transposed (BT[j, i] = B[i, j])
+        for j in 0..n {
+            let bij = rng.random::<u32>() as f64;
+            bt[idx(j, i, n)] = bij; // store B[i, j] into BT[j, i]
         }
     }
     let t_transpose = t0.elapsed().as_secs_f64();
@@ -32,13 +35,14 @@ fn main() {
     let start_time = Instant::now();
 
     for i in 0..n {
+        let ai = &a[idx(i, 0, n) .. idx(i, 0, n) + n]; // row i of A
         for j in 0..n {
-            let mut total = 0.0;
+            let btj = &bt[idx(j, 0, n) .. idx(j, 0, n) + n]; // row j of BT (col j of B)
+            let mut sum = 0.0;
             for k in 0..n {
-                //total += a[i][k] * b[k][j];
-                total += a[i][k] * bt[j][k];
+                sum += ai[k] * btj[k];  // A[i, k] * B[k, j]
             }
-            c[i][j] = total;
+            c[idx(i, j, n)] = sum; // C[i, j]
         }
     }
 
@@ -46,7 +50,8 @@ fn main() {
     println!("multiply only: {:.6} seconds", duration);
     println!("transpose(B): {:.6} seconds", t_transpose);
 
-    // Suppress compiler optimization by using the result.
-    let checksum: f64 = c[0].iter().take(8).sum();
+     // Suppress compiler optimization by using the result.
+    let checksum: f64 = c[0..8].iter().sum();
+
     eprintln!("checksum(first row, 8) = {:.6e}", checksum);
 }
