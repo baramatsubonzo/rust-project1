@@ -2,7 +2,7 @@ use std::time::Instant;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
 fn main() {
-    let n: usize = 1500;
+    let n: usize = 2000;
 
     let mut a: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
     let mut b: Vec<Vec<f64>> = vec![vec![0.0_f64; n]; n];
