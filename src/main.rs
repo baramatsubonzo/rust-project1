@@ -1,5 +1,6 @@
 use std::time::Instant;
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use rayon::prelude::*;
 
 #[inline]
 fn idx(i: usize, j: usize, n: usize) -> usize { i * n + j } // row-major
@@ -34,17 +35,20 @@ fn main() {
     // Start timing the matrix multiplication
     let start_time = Instant::now();
 
-    for i in 0..n {
-        let ai = &a[idx(i, 0, n) .. idx(i, 0, n) + n]; // row i of A
-        for j in 0..n {
-            let btj = &bt[idx(j, 0, n) .. idx(j, 0, n) + n]; // row j of BT (col j of B)
-            let mut sum = 0.0;
-            for k in 0..n {
-                sum += ai[k] * btj[k];  // A[i, k] * B[k, j]
+    c.par_chunks_mut(n)
+        .enumerate()
+        .for_each(|(i, row_c)| {
+            let ai = &a[i * n .. i * n + n];
+            for j in 0..row_c.len() {
+                let btj = &bt[j * n .. j * n + n];
+                let mut sum = 0.0;
+                for k in 0.. n {
+                    sum += ai[k] * btj[k];
+                }
+                row_c[j] = sum;
             }
-            c[idx(i, j, n)] = sum; // C[i, j]
-        }
-    }
+
+        });
 
     let duration = start_time.elapsed().as_secs_f64();
     println!("multiply only: {:.6} seconds", duration);
