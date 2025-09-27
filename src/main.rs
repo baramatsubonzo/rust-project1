@@ -1,5 +1,6 @@
 use std::time::Instant;
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use rayon::prelude::*;
 
 fn main() {
     let n: usize = 2000;
@@ -20,15 +21,18 @@ fn main() {
 
     let start_time = Instant::now();
 
-    for i in 0..n {
-        for j in 0..n {
-            let mut total = 0.0;
-            for k in 0..n {
-                total += a[i][k] * b[k][j];
+    c.par_iter_mut()
+        .enumerate()
+        .for_each(|(i, row_c)| {
+            for j in 0..row_c.len() {
+                let mut total = 0.0;
+                for k in 0..row_c.len() {
+                    total += a[i][k] * b[k][j];
+                }
+                row_c[j] = total;
             }
-            c[i][j] = total;
-        }
-    }
+        });
+
 
     let duration = start_time.elapsed().as_secs_f64();
     println!("{:.6} seconds", duration);
